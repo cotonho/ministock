@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme';
 
 import LoginScreen from '../screens/LoginScreen';
 import ProductListScreen from '../screens/ProductListScreen';
@@ -13,7 +14,6 @@ import ProductFormScreen from '../screens/ProductFormScreen';
 
 const Stack = createNativeStackNavigator();
 
-// ─── Stack de usuário não autenticado ─────────────────────────────────────────
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -22,16 +22,16 @@ function AuthStack() {
   );
 }
 
-// ─── Stack de usuário autenticado ────────────────────────────────────────────
 function AppStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#0f172a' },
-        headerTintColor: '#f8fafc',
-        headerTitleStyle: { fontWeight: '700', fontSize: 18 },
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.textPrimary,
+        headerTitleStyle: { fontWeight: '700', fontSize: 18, color: colors.textPrimary },
         headerBackTitle: 'Voltar',
-        contentStyle: { backgroundColor: '#0f172a' },
+        headerShadowVisible: true,
+        contentStyle: { backgroundColor: colors.bg },
       }}
     >
       <Stack.Screen
@@ -55,14 +55,13 @@ function AppStack() {
   );
 }
 
-// ─── Raiz da navegação ────────────────────────────────────────────────────────
 export default function AppNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#38bdf8" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -76,9 +75,7 @@ export default function AppNavigator() {
 
 const styles = StyleSheet.create({
   loading: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, backgroundColor: colors.bg,
+    justifyContent: 'center', alignItems: 'center',
   },
 });

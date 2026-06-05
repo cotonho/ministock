@@ -1,32 +1,22 @@
 // src/screens/LoginScreen.js
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-  StatusBar,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme';
 
 export default function LoginScreen() {
   const { login, isLoading, error, clearError } = useAuth();
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Limpa erro global ao desmontar
   useEffect(() => () => clearError(), []);
 
-  // ─── Validação local dos campos ──────────────────────────────────────────────
   function validate() {
     const errors = {};
     if (!username.trim()) errors.username = 'Informe o usuário';
@@ -35,7 +25,6 @@ export default function LoginScreen() {
     return Object.keys(errors).length === 0;
   }
 
-  // ─── Submit ──────────────────────────────────────────────────────────────────
   async function handleLogin() {
     if (!validate()) return;
     clearError();
@@ -48,7 +37,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -71,7 +60,6 @@ export default function LoginScreen() {
           <View style={styles.form}>
             <Text style={styles.formTitle}>Entrar na conta</Text>
 
-            {/* Erro global da API */}
             {error ? (
               <View style={styles.errorBanner}>
                 <Text style={styles.errorBannerText}>⚠️ {error}</Text>
@@ -84,7 +72,7 @@ export default function LoginScreen() {
               <TextInput
                 style={[styles.input, fieldErrors.username && styles.inputError]}
                 placeholder="ex: emilys"
-                placeholderTextColor="#475569"
+                placeholderTextColor={colors.textMuted}
                 value={username}
                 onChangeText={(v) => {
                   setUsername(v);
@@ -104,13 +92,9 @@ export default function LoginScreen() {
               <Text style={styles.label}>Senha</Text>
               <View style={styles.passwordRow}>
                 <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    fieldErrors.password && styles.inputError,
-                  ]}
+                  style={[styles.input, styles.passwordInput, fieldErrors.password && styles.inputError]}
                   placeholder="••••••••"
-                  placeholderTextColor="#475569"
+                  placeholderTextColor={colors.textMuted}
                   value={password}
                   onChangeText={(v) => {
                     setPassword(v);
@@ -137,9 +121,7 @@ export default function LoginScreen() {
               style={styles.fillDemo}
               onPress={() => { setUsername('emilys'); setPassword('emilyspass'); }}
             >
-              <Text style={styles.fillDemoText}>
-                🔑 Usar credenciais de teste
-              </Text>
+              <Text style={styles.fillDemoText}>🔑 Usar credenciais de teste</Text>
             </TouchableOpacity>
 
             {/* Botão de login */}
@@ -150,7 +132,7 @@ export default function LoginScreen() {
               activeOpacity={0.85}
             >
               {isLoading ? (
-                <ActivityIndicator color="#0f172a" />
+                <ActivityIndicator color={colors.textOnAccent} />
               ) : (
                 <Text style={styles.buttonText}>Entrar</Text>
               )}
@@ -163,131 +145,62 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f172a' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  header: { alignItems: 'center', marginBottom: 40 },
   logoBox: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#1e293b',
+    width: 80, height: 80,
+    backgroundColor: colors.accentLight,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
+    borderWidth: 1, borderColor: colors.border,
   },
   logoEmoji: { fontSize: 38 },
-  appName: {
-    color: '#f8fafc',
-    fontSize: 32,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    color: '#64748b',
-    fontSize: 14,
-    marginTop: 6,
-  },
+  appName: { color: colors.textPrimary, fontSize: 32, fontWeight: '800', letterSpacing: -0.5 },
+  tagline: { color: colors.textMuted, fontSize: 14, marginTop: 6 },
   form: {
-    backgroundColor: '#1e293b',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#334155',
+    backgroundColor: colors.surface,
+    borderRadius: 20, padding: 24,
+    borderWidth: 1, borderColor: colors.border,
     gap: 16,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  formTitle: {
-    color: '#f8fafc',
-    fontSize: 20,
-    fontWeight: '700',
-  },
+  formTitle: { color: colors.textPrimary, fontSize: 20, fontWeight: '700' },
   errorBanner: {
-    backgroundColor: '#7f1d1d',
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ef4444',
+    backgroundColor: colors.dangerLight,
+    borderRadius: 10, padding: 12,
+    borderWidth: 1, borderColor: colors.danger,
   },
-  errorBannerText: {
-    color: '#fca5a5',
-    fontSize: 13,
-    fontWeight: '500',
-  },
+  errorBannerText: { color: colors.danger, fontSize: 13, fontWeight: '500' },
   fieldGroup: { gap: 6 },
-  label: {
-    color: '#94a3b8',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
+  label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600', letterSpacing: 0.3 },
   input: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    color: '#f8fafc',
-    fontSize: 15,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 12, borderWidth: 1, borderColor: colors.border,
+    color: colors.textPrimary, fontSize: 15,
+    paddingHorizontal: 16, paddingVertical: 14,
   },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  fieldError: {
-    color: '#f87171',
-    fontSize: 12,
-  },
-  passwordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  passwordInput: {
-    flex: 1,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-  },
+  inputError: { borderColor: colors.danger },
+  fieldError: { color: colors.danger, fontSize: 12 },
+  passwordRow: { flexDirection: 'row', alignItems: 'center' },
+  passwordInput: { flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 },
   eyeButton: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderColor: '#334155',
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1, borderLeftWidth: 0, borderColor: colors.border,
+    borderTopRightRadius: 12, borderBottomRightRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 14,
   },
   eyeIcon: { fontSize: 18 },
-  fillDemo: {
-    alignSelf: 'center',
-    paddingVertical: 6,
-  },
-  fillDemoText: {
-    color: '#38bdf8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
+  fillDemo: { alignSelf: 'center', paddingVertical: 6 },
+  fillDemoText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   button: {
-    backgroundColor: '#38bdf8',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 4,
+    backgroundColor: colors.accent,
+    borderRadius: 12, paddingVertical: 16,
+    alignItems: 'center', marginTop: 4,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#0f172a',
-    fontSize: 16,
-    fontWeight: '800',
-  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '800' },
 });

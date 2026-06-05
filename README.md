@@ -1,56 +1,195 @@
-# Welcome to your Expo app 👋
+# 📦 MiniStock Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App mobile de gestão de estoque construído com **React Native + Expo**, consumindo a API pública [DummyJSON](https://dummyjson.com) com **axios** de forma profissional.
 
-## Get started
+> Projeto avaliativo — curso de Desenvolvimento Mobile
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 🚀 Funcionalidades
 
-2. Start the app
+- 🔐 **Login** com autenticação JWT via DummyJSON (`/auth/login`)
+- 📋 **Listagem de produtos** com FlatList, paginação infinita e pull-to-refresh
+- 🔍 **Busca por termo** com debounce e **filtro por categoria** via modal
+- 🛍️ **Tela de detalhes** com galeria de imagens, avaliações e informações completas
+- ➕ **Cadastro** de novos produtos com validação completa de formulário
+- ✏️ **Edição** de produtos existentes
+- 🗑️ **Exclusão** com diálogo de confirmação (`Alert.alert`)
+- 🚪 **Logout** funcional limpando AsyncStorage
+- ⚠️ **Tratamento de estados** em todas as telas: loading, erro e lista vazia
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+| Tecnologia | Uso |
+|---|---|
+| React Native + Expo | Framework mobile |
+| axios | Todas as requisições HTTP |
+| React Navigation (native-stack) | Navegação entre telas |
+| AsyncStorage | Persistência do token JWT |
+| DummyJSON | API pública de testes |
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 📁 Estrutura do Projeto
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+ministock/
+├── App.js                          # Raiz: AuthProvider + AppNavigator
+├── src/
+│   ├── services/
+│   │   ├── api.js                  # ★ Instância axios com interceptors
+│   │   ├── authService.js          # Login, logout, AsyncStorage
+│   │   └── productService.js       # CRUD completo de produtos
+│   ├── context/
+│   │   └── AuthContext.js          # Estado global de autenticação
+│   ├── hooks/
+│   │   └── useProducts.js          # Paginação, busca e filtro
+│   ├── navigation/
+│   │   └── AppNavigator.js         # Rotas autenticadas e públicas
+│   ├── screens/
+│   │   ├── LoginScreen.js
+│   │   ├── ProductListScreen.js
+│   │   ├── ProductDetailScreen.js
+│   │   └── ProductFormScreen.js
+│   └── components/
+│       ├── ProductCard.js
+│       ├── LoadingSpinner.js
+│       ├── ErrorMessage.js
+│       └── EmptyState.js
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## ⚙️ Instalação e execução
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Pré-requisitos
 
-## Learn more
+- Node.js 18+
+- npm ou yarn
+- Expo Go instalado no celular **ou** emulador Android/iOS
 
-To learn more about developing your project with Expo, look at the following resources:
+### Passos
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/SEU_USUARIO/ministock.git
+cd ministock
 
-## Join the community
+# 2. Instalar dependências
+npm install
 
-Join our community of developers creating universal apps.
+# 3. Iniciar o servidor de desenvolvimento
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Escaneie o QR code com o aplicativo **Expo Go** (Android) ou a câmera (iOS).
+
+---
+
+## 🔑 Credenciais de Teste
+
+```
+Usuário: emilys
+Senha:   emilyspass
+```
+
+Ou toque em **"Usar credenciais de teste"** na tela de login.
+
+---
+
+## 🏗️ Arquitetura do Axios
+
+### `src/services/api.js` — Instância única
+
+```js
+const api = axios.create({
+  baseURL: 'https://dummyjson.com',
+  timeout: 10000,
+});
+```
+
+### Interceptor de Request
+Injeta o token JWT automaticamente em **todas** as requisições autenticadas, lendo-o do AsyncStorage.
+
+### Interceptor de Response
+Trata globalmente:
+- `ECONNABORTED` → timeout
+- Sem resposta → erro de rede
+- `401` → sessão expirada
+- `404` → recurso não encontrado
+- `5xx` → erro de servidor
+
+### Regras obrigatórias seguidas
+- ✅ Instância única com `baseURL` e `timeout`
+- ✅ Interceptors de request e response
+- ✅ `params` do axios (nunca concatenação de query string)
+- ✅ `async/await` com `try/catch/finally` em todos os serviços
+- ✅ Zero chamadas axios em componentes de tela
+
+---
+
+## 📡 Endpoints utilizados
+
+| Método | Endpoint | Uso |
+|---|---|---|
+| POST | `/auth/login` | Login |
+| GET | `/products` | Listar produtos (paginado) |
+| GET | `/products/search` | Buscar por termo |
+| GET | `/products/categories` | Listar categorias |
+| GET | `/products/category/:slug` | Filtrar por categoria |
+| GET | `/products/:id` | Detalhes do produto |
+| POST | `/products/add` | Criar produto |
+| PUT | `/products/:id` | Editar produto |
+| DELETE | `/products/:id` | Excluir produto |
+
+---
+
+## 📸 Capturas de Tela
+
+> *(Adicione capturas de tela do app em execução aqui)*
+
+| Login | Lista de Produtos | Detalhes | Formulário |
+|---|---|---|---|
+| ![Login](#) | ![Lista](#) | ![Detalhes](#) | ![Form](#) |
+
+---
+
+## 🎥 Vídeo Demonstrativo
+
+> [Assista no YouTube/Loom](#) — demonstração do fluxo completo em até 2 minutos
+
+---
+
+## 📝 Histórico de commits
+
+O projeto segue commits incrementais por funcionalidade:
+
+```
+feat: setup inicial do projeto com estrutura de pastas
+feat: instância axios com interceptors de request e response
+feat: authService com login, logout e persistência de token
+feat: productService com CRUD completo usando params do axios
+feat: AuthContext com reducer para estado global
+feat: useProducts hook com paginação infinita
+feat: AppNavigator com rotas autenticadas e públicas
+feat: LoginScreen com validação e credenciais de teste
+feat: ProductListScreen com FlatList, pull-to-refresh e busca
+feat: filtro por categoria com modal e chips
+feat: ProductDetailScreen com galeria e estatísticas
+feat: exclusão de produto com Alert de confirmação
+feat: ProductFormScreen com validação e sugestão de categorias
+feat: componentes reutilizáveis LoadingSpinner, ErrorMessage, EmptyState
+```
+
+---
+
+## 📚 Documentação
+
+- [axios](https://axios-http.com/docs/intro)
+- [DummyJSON](https://dummyjson.com/docs)
+- [React Native](https://reactnative.dev/docs/getting-started)
+- [Expo](https://docs.expo.dev)
+- [React Navigation](https://reactnavigation.org/docs/getting-started)
+- [AsyncStorage](https://react-native-async-storage.github.io/async-storage/)

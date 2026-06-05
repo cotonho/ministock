@@ -52,11 +52,13 @@ export async function getProductsByCategory(category, { limit = PRODUCTS_LIMIT, 
 
 /**
  * Busca a lista de todas as categorias disponíveis.
+ * CORRIGIDO: endpoint era '/products/categories', o correto conforme
+ * o enunciado e a documentação da DummyJSON é '/products/category-list'
  */
 export async function getCategories() {
   try {
-    const response = await api.get('/products/categories');
-    return response.data; // array de objetos { slug, name, url }
+    const response = await api.get('/products/category-list');
+    return response.data; // array de strings com os slugs das categorias
   } catch (error) {
     throw error;
   }
@@ -80,28 +82,28 @@ export async function getProductById(id) {
  * @param {object} data - { title, price, stock, category, description, discountPercentage, brand }
  */
 export async function createProduct(data) {
+  console.log('[createProduct] Chamada iniciada com dados:', data);
   try {
     const response = await api.post('/products/add', data);
+    console.log('[createProduct] Resposta recebida:', response.data);
     return response.data;
   } catch (error) {
+    console.error('[createProduct] Erro:', error.response?.status, error.response?.data || error.message);
     throw error;
   }
 }
 
-/**
- * Atualiza um produto existente (simulado).
- * @param {number} id
- * @param {object} data - campos a atualizar
- */
 export async function updateProduct(id, data) {
+  console.log(`[updateProduct] Chamada iniciada para ID ${id} com dados:`, data);
   try {
     const response = await api.put(`/products/${id}`, data);
+    console.log('[updateProduct] Resposta recebida:', response.data);
     return response.data;
   } catch (error) {
+    console.error(`[updateProduct] Erro no ID ${id}:`, error.response?.status, error.response?.data || error.message);
     throw error;
   }
 }
-
 /**
  * Remove um produto (simulado).
  * @param {number} id

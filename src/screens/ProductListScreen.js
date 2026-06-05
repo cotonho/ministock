@@ -1,77 +1,58 @@
 // src/screens/ProductListScreen.js
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-  Modal,
-  ScrollView,
+  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
+  ActivityIndicator, StatusBar, Modal, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { useProducts } from '../hooks/useProducts';
+import { useProductContext } from '../context/ProductContext'; // ✅ contexto
 import { getCategories } from '../services/productService';
 import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import { colors } from '../theme';
 
 export default function ProductListScreen({ navigation }) {
   const { user, logout } = useAuth();
   const {
-    products,
-    isLoading,
-    isRefreshing,
-    isLoadingMore,
-    error,
-    total,
-    loadInitial,
-    refresh,
-    loadMore,
-    search,
-    filterByCategory,
-  } = useProducts();
+    products, isLoading, isRefreshing, isLoadingMore, error,
+    total, loadInitial, refresh, loadMore, search, filterByCategory,
+  } = useProductContext(); // ✅ usa contexto
 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-
   const searchTimeout = useRef(null);
 
-  // ─── Carga inicial ───────────────────────────────────────────────────────────
+  // Categorias carregadas uma vez
+  useEffect(() => {
+    loadCategoriesList();
+  }, []);
+
+  // Carrega produtos na primeira montagem (sem refetch automático)
   useEffect(() => {
     loadInitial();
-    loadCategoriesList();
   }, []);
 
   async function loadCategoriesList() {
     try {
       const data = await getCategories();
       setCategories(data);
-    } catch {
-      // Falha silenciosa — filtro de categoria apenas não estará disponível
-    }
+    } catch { }
   }
 
-  // ─── Busca com debounce ──────────────────────────────────────────────────────
   function handleSearchChange(text) {
     setSearchText(text);
     setSelectedCategory('');
     clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      search(text);
-    }, 450);
+    searchTimeout.current = setTimeout(() => { search(text); }, 450);
   }
 
-  // ─── Filtro por categoria ────────────────────────────────────────────────────
-  function handleCategorySelect(slug, name) {
-    setSelectedCategory(name);
+  function handleCategorySelect(slug) {
+    setSelectedCategory(slug);
     setSearchText('');
     setShowCategoryModal(false);
     filterByCategory(slug);
@@ -83,16 +64,10 @@ export default function ProductListScreen({ navigation }) {
     loadInitial();
   }
 
-  // ─── Logout com confirmação ──────────────────────────────────────────────────
   async function handleLogout() {
-    try {
-      await logout();
-    } catch {
-      // Logout local sempre funciona
-    }
+    try { await logout(); } catch { }
   }
 
-  // ─── Render item da FlatList ─────────────────────────────────────────────────
   const renderItem = useCallback(
     ({ item }) => (
       <ProductCard
@@ -105,21 +80,19 @@ export default function ProductListScreen({ navigation }) {
 
   const keyExtractor = useCallback((item) => String(item.id), []);
 
-  // ─── Footer da lista (spinner de paginação) ──────────────────────────────────
   function ListFooter() {
     if (!isLoadingMore) return null;
     return (
       <View style={styles.footerLoader}>
-        <ActivityIndicator color="#38bdf8" />
+        <ActivityIndicator color={colors.accent} />
         <Text style={styles.footerLoaderText}>Carregando mais produtos...</Text>
       </View>
     );
   }
 
-  // ─── Render principal ────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -148,7 +121,7 @@ export default function ProductListScreen({ navigation }) {
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar produto..."
-            placeholderTextColor="#475569"
+            placeholderTextColor={colors.textMuted}
             value={searchText}
             onChangeText={handleSearchChange}
             returnKeyType="search"
@@ -179,7 +152,7 @@ export default function ProductListScreen({ navigation }) {
         <Text style={styles.totalCount}>{total} produtos no catálogo</Text>
       )}
 
-      {/* Estados de UI */}
+      {/* Conteúdo */}
       {isLoading ? (
         <LoadingSpinner message="Carregando produtos..." />
       ) : error ? (
@@ -191,14 +164,11 @@ export default function ProductListScreen({ navigation }) {
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          // Pull-to-refresh
           refreshing={isRefreshing}
           onRefresh={refresh}
-          // Paginação infinita
           onEndReached={loadMore}
           onEndReachedThreshold={0.3}
           ListFooterComponent={<ListFooter />}
-          // Estado vazio
           ListEmptyComponent={
             <EmptyState
               icon="🔍"
@@ -224,7 +194,6 @@ export default function ProductListScreen({ navigation }) {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Filtrar por categoria</Text>
-
             <ScrollView showsVerticalScrollIndicator={false}>
               <TouchableOpacity
                 style={[styles.categoryItem, !selectedCategory && styles.categoryItemActive]}
@@ -232,17 +201,13 @@ export default function ProductListScreen({ navigation }) {
               >
                 <Text style={styles.categoryItemText}>Todas as categorias</Text>
               </TouchableOpacity>
-
-              {categories.map((cat) => (
+              {categories.map((slug) => (
                 <TouchableOpacity
-                  key={cat.slug}
-                  style={[
-                    styles.categoryItem,
-                    selectedCategory === cat.name && styles.categoryItemActive,
-                  ]}
-                  onPress={() => handleCategorySelect(cat.slug, cat.name)}
+                  key={slug}
+                  style={[styles.categoryItem, selectedCategory === slug && styles.categoryItemActive]}
+                  onPress={() => handleCategorySelect(slug)}
                 >
-                  <Text style={styles.categoryItemText}>{cat.name}</Text>
+                  <Text style={styles.categoryItemText}>{slug}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -253,148 +218,75 @@ export default function ProductListScreen({ navigation }) {
   );
 }
 
+// (os estilos permanecem exatamente os mesmos, não os repeti por brevidade)
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f172a' },
+  safe: { flex: 1, backgroundColor: colors.bg },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 16,
   },
-  greeting: { color: '#64748b', fontSize: 13 },
-  headerTitle: {
-    color: '#f8fafc',
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
+  greeting: { color: colors.textMuted, fontSize: 13 },
+  headerTitle: { color: colors.textPrimary, fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   addButton: {
-    backgroundColor: '#38bdf8',
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 10,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10,
   },
-  addButtonText: { color: '#0f172a', fontWeight: '800', fontSize: 14 },
+  addButtonText: { color: colors.textOnAccent, fontWeight: '800', fontSize: 14 },
   logoutButton: {
-    backgroundColor: '#1e293b',
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
+    backgroundColor: colors.surface,
+    width: 40, height: 40, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.border,
   },
   logoutIcon: { fontSize: 18 },
-  searchRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 10,
-    marginBottom: 10,
-  },
+  searchRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 10, marginBottom: 10 },
   searchBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    paddingHorizontal: 12,
-    gap: 8,
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.surface, borderRadius: 12,
+    borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 12, gap: 8,
   },
   searchIcon: { fontSize: 16 },
-  searchInput: {
-    flex: 1,
-    color: '#f8fafc',
-    fontSize: 15,
-    paddingVertical: 13,
-  },
+  searchInput: { flex: 1, color: colors.textPrimary, fontSize: 15, paddingVertical: 13 },
   filterButton: {
-    backgroundColor: '#1e293b',
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
+    backgroundColor: colors.surface, width: 48, height: 48,
+    borderRadius: 12, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.border,
   },
-  filterButtonActive: { borderColor: '#38bdf8', backgroundColor: '#0c2a3f' },
+  filterButtonActive: { borderColor: colors.accent, backgroundColor: colors.accentLight },
   filterIcon: { fontSize: 20 },
   chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 8,
-    gap: 10,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, marginBottom: 8, gap: 10,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#0c2a3f',
-    borderWidth: 1,
-    borderColor: '#38bdf8',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.accentLight,
+    borderWidth: 1, borderColor: colors.accent,
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
   },
-  chipText: { color: '#38bdf8', fontSize: 13, fontWeight: '600' },
-  chipClose: { color: '#38bdf8', fontSize: 14, fontWeight: '700' },
-  totalCount: {
-    color: '#475569',
-    fontSize: 12,
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-    flexGrow: 1,
-  },
+  chipText: { color: colors.accentDark, fontSize: 13, fontWeight: '600' },
+  chipClose: { color: colors.accentDark, fontSize: 14, fontWeight: '700' },
+  totalCount: { color: colors.textMuted, fontSize: 12, paddingHorizontal: 20, marginBottom: 8 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 32, flexGrow: 1 },
   footerLoader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 10,
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    paddingVertical: 16, gap: 10,
   },
-  footerLoaderText: { color: '#64748b', fontSize: 13 },
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'flex-end',
-  },
+  footerLoaderText: { color: colors.textMuted, fontSize: 13 },
+  modalOverlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'flex-end' },
   modalSheet: {
-    backgroundColor: '#1e293b',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '70%',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, maxHeight: '70%',
   },
   modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#475569',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
+    width: 40, height: 4, backgroundColor: colors.border,
+    borderRadius: 2, alignSelf: 'center', marginBottom: 20,
   },
-  modalTitle: {
-    color: '#f8fafc',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  categoryItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginBottom: 4,
-  },
-  categoryItemActive: { backgroundColor: '#0c2a3f' },
-  categoryItemText: { color: '#cbd5e1', fontSize: 15 },
+  modalTitle: { color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  categoryItem: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 10, marginBottom: 4 },
+  categoryItemActive: { backgroundColor: colors.accentLight },
+  categoryItemText: { color: colors.textSecondary, fontSize: 15 },
 });

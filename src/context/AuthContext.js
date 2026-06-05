@@ -1,6 +1,7 @@
 // src/context/AuthContext.js
 // Gerencia estado global de autenticação e expõe para toda a árvore de componentes
 import React, { createContext, useContext, useEffect, useReducer, useCallback } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { login as loginService, logout as logoutService, getStoredToken, getStoredUser } from '../services/authService';
 
 // ─── Estado inicial ───────────────────────────────────────────────────────────
@@ -59,6 +60,14 @@ export function AuthProvider({ children }) {
       dispatch({ type: 'RESTORE_SESSION', token, user });
     }
     restoreSession();
+  }, []);
+
+  // Escuta o evento de não autorizado (emitido pelo interceptor ao receber 401)
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('UNAUTHORIZED', () => {
+      dispatch({ type: 'LOGOUT' });
+    });
+    return () => subscription.remove();
   }, []);
 
   const login = useCallback(async (username, password) => {
