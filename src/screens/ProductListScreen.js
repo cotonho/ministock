@@ -1,38 +1,51 @@
 // src/screens/ProductListScreen.js
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, StatusBar, Modal, ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Modal, ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput, TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../context/AuthContext';
-import { useProductContext } from '../context/ProductContext'; // ✅ contexto
-import { getCategories } from '../services/productService';
-import ProductCard from '../components/ProductCard';
-import LoadingSpinner from '../components/LoadingSpinner';
-import ErrorMessage from '../components/ErrorMessage';
 import EmptyState from '../components/EmptyState';
+import ErrorMessage from '../components/ErrorMessage';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ProductCard from '../components/ProductCard';
+import { useAuth } from '../context/AuthContext';
+import { useProductContext } from '../context/ProductContext';
+import { getCategories } from '../services/productService';
 import { colors } from '../theme';
 
 export default function ProductListScreen({ navigation }) {
   const { user, logout } = useAuth();
   const {
-    products, isLoading, isRefreshing, isLoadingMore, error,
-    total, loadInitial, refresh, loadMore, search, filterByCategory,
-  } = useProductContext(); // ✅ usa contexto
+    products,           // array completo no contexto (inclui itens adicionados/editados)
+    isLoading,
+    isRefreshing,
+    isLoadingMore,
+    error,
+    total,
+    loadInitial,
+    refresh: contextRefresh,
+    loadMore: contextLoadMore,
+    hasMore,
+  } = useProductContext();
 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const searchTimeout = useRef(null);
 
   // Categorias carregadas uma vez
   useEffect(() => {
     loadCategoriesList();
   }, []);
 
-  // Carrega produtos na primeira montagem (sem refetch automático)
+  // Carrega produtos iniciais da API (sem filtros)
   useEffect(() => {
     loadInitial();
   }, []);
@@ -44,28 +57,61 @@ export default function ProductListScreen({ navigation }) {
     } catch { }
   }
 
+  // ─── FILTRO LOCAL ─────────────────────────────────────────────
+  // Aplica pesquisa textual e categoria sobre o array em memória
+  const filteredProducts = useMemo(() => {
+    let result = products;
+
+    if (selectedCategory) {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+
+    if (searchText.trim()) {
+      const lower = searchText.trim().toLowerCase();
+      result = result.filter(p =>
+        p.title?.toLowerCase().includes(lower) ||
+        p.description?.toLowerCase().includes(lower) ||
+        p.brand?.toLowerCase().includes(lower)
+      );
+    }
+
+    return result;
+  }, [products, searchText, selectedCategory]);
+
+  // ─── Handlers ─────────────────────────────────────────────────
   function handleSearchChange(text) {
     setSearchText(text);
-    setSelectedCategory('');
-    clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => { search(text); }, 450);
+    // Não chama API – apenas atualiza o estado local
   }
 
   function handleCategorySelect(slug) {
     setSelectedCategory(slug);
-    setSearchText('');
     setShowCategoryModal(false);
-    filterByCategory(slug);
+    // Não chama API – apenas atualiza o estado local
   }
 
   function handleClearFilters() {
     setSelectedCategory('');
     setSearchText('');
-    loadInitial();
+    // Opcional: recarregar a lista original da API se quiseres
+    // loadInitial();
   }
 
   async function handleLogout() {
     try { await logout(); } catch { }
+  }
+
+  // Pull-to-refresh: limpa filtros e recarrega da API
+  function handleRefresh() {
+    setSearchText('');
+    setSelectedCategory('');
+    contextRefresh(); // refresh do contexto (vai buscar página 0 sem filtros)
+  }
+
+  // Paginação infinita: só quando não há filtros ativos
+  function handleLoadMore() {
+    if (searchText || selectedCategory) return; // não carrega mais com filtro local
+    contextLoadMore();
   }
 
   const renderItem = useCallback(
@@ -109,7 +155,7 @@ export default function ProductListScreen({ navigation }) {
             <Text style={styles.addButtonText}>+ Novo</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutIcon}>⏻</Text>
+            <Text>Sair</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -146,27 +192,27 @@ export default function ProductListScreen({ navigation }) {
               <Text style={styles.chipClose}> ✕</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.totalCount}>{total} produtos</Text>
+          <Text style={styles.totalCount}>{filteredProducts.length} de {products.length} produtos</Text>
         </View>
       ) : (
-        <Text style={styles.totalCount}>{total} produtos no catálogo</Text>
+        <Text style={styles.totalCount}>{products.length} produtos carregados</Text>
       )}
 
       {/* Conteúdo */}
       {isLoading ? (
         <LoadingSpinner message="Carregando produtos..." />
       ) : error ? (
-        <ErrorMessage message={error} onRetry={() => loadInitial(searchText, selectedCategory)} />
+        <ErrorMessage message={error} onRetry={() => loadInitial()} />
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}   // usa a lista filtrada localmente
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshing={isRefreshing}
-          onRefresh={refresh}
-          onEndReached={loadMore}
+          onRefresh={handleRefresh}    // refresh reseta filtros
+          onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           ListFooterComponent={<ListFooter />}
           ListEmptyComponent={
@@ -218,7 +264,7 @@ export default function ProductListScreen({ navigation }) {
   );
 }
 
-// (os estilos permanecem exatamente os mesmos, não os repeti por brevidade)
+// Estilos (mantidos exatamente como antes)
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {

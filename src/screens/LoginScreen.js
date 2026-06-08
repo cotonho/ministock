@@ -1,8 +1,12 @@
 // src/screens/LoginScreen.js
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar,
+  ActivityIndicator,
+  KeyboardAvoidingView, Platform, ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
@@ -108,7 +112,7 @@ export default function LoginScreen() {
                   style={styles.eyeButton}
                   onPress={() => setShowPassword((v) => !v)}
                 >
-                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                  <Text style={styles.size}>{showPassword ? 'ocultar' : 'mostrar'}</Text>
                 </TouchableOpacity>
               </View>
               {fieldErrors.password ? (
