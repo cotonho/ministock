@@ -2,7 +2,7 @@
 
 App mobile de gestão de estoque construído com **React Native + Expo**, consumindo a API pública [DummyJSON](https://dummyjson.com) com **axios** de forma profissional.
 
-> Projeto avaliativo — curso de Desenvolvimento Mobile
+> Projeto avaliativo — Matéria de Desenvolvimento Mobile
 
 ---
 
@@ -148,8 +148,6 @@ Trata globalmente:
 
 ## Capturas de Tela
 
-> *(Adicione capturas de tela do app em execução aqui)*
-
 | Login | Lista de Produtos | Detalhes | Cadastro / Edição |
 |---|---|---|---|
 | ![Login](screenshots/Login.jpeg) | ![Home](screenshots/Home.jpeg) | ![Detalhes](screenshots/Detalhes.jpeg) | ![Cadastro](screenshots/Cadastro.jpeg) |
@@ -158,7 +156,7 @@ Trata globalmente:
 
 ## Vídeo Demonstrativo
 
-> [Assista no YouTube/Loom](#) — demonstração do fluxo completo em até 2 minutos
+> [Assista no YouTube/Loom](https://youtube.com/shorts/bDkQQOc6Ji0?si=JdEBBBFWunHssF2b)
 
 ---
 
