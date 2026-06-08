@@ -156,7 +156,7 @@ Trata globalmente:
 
 ## Vídeo Demonstrativo
 
-> [Assista no YouTube/Loom](https://youtube.com/shorts/bDkQQOc6Ji0?si=JdEBBBFWunHssF2b)
+> [Assista no YouTube](https://youtube.com/shorts/bDkQQOc6Ji0?si=JdEBBBFWunHssF2b)
 
 ---
 
