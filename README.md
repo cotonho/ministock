@@ -152,7 +152,7 @@ Trata globalmente:
 
 | Login | Lista de Produtos | Detalhes | Cadastro / Edição |
 |---|---|---|---|
-| ![Login](screenshots/Login.png) | ![Home](screenshots/Home.png) | ![Detalhes](screenshots/Detalhes.png) | ![Cadastro](screenshots/Cadastro.png) |
+| ![Login](screenshots/Login.jpeg) | ![Home](screenshots/Home.jpeg) | ![Detalhes](screenshots/Detalhes.jpeg) | ![Cadastro](screenshots/Cadastro.jpeg) |
 
 ---
 
